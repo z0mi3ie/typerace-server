@@ -1,0 +1,13 @@
+test
+word
+dictionary
+carpenter
+fulci
+argento
+golang
+ebitengine
+and
+by
+itself
+hello
+goodbye
