@@ -35,13 +35,17 @@ func HandleEvent(e EventRequest) any {
 		s := session.New()
 		sessions[s.ID] = s
 		r := NewSessionResponse{
+			EventName: NewSessionResponseEvent,
 			SessionID: sessions[s.ID].ID,
 		}
 		return r
 	case EventGetDictionary:
-		log.Println("EventGetDictionary received.")
-		w := sessions[e.SessionID].Dictionary.Random()
+		log.Println("EventGetDictionary received. Session: " + e.SessionID)
+		session := sessions[e.SessionID]
+		log.Println("Got session: " + session.ID)
+		w := session.Dictionary.Random()
 		r := GetDictionaryResponse{
+			EventName: GetDictionaryResponseEvent,
 			SessionID: GetSession(),
 			Words:     []string{w},
 		}
@@ -84,12 +88,14 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 
 	connections = append(connections, c)
 
-	for _, cc := range connections {
-		err = wsjson.Write(context.Background(), cc, "new client connected")
-		if err != nil {
-			log.Println(err)
+	/*
+		for _, cc := range connections {
+			err = wsjson.Write(context.Background(), cc, "new client connected")
+			if err != nil {
+				log.Println(err)
+			}
 		}
-	}
+	*/
 
 	for {
 		ctx, cancel := context.WithTimeout(r.Context(), time.Second*60)
@@ -106,6 +112,7 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 		// parse and handle event
 		r := HandleEvent(v)
 
+		log.Println("after handle event")
 		// respond with events back to clients
 		for _, cc := range connections {
 			err = wsjson.Write(ctx, cc, r)

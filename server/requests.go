@@ -9,6 +9,6 @@ const (
 )
 
 type EventRequest struct {
-	SessionID string `json:"sessionId"`
+	SessionID string `json:"sessionId,omitempty"`
 	Event     string `json:"event"`
 }
