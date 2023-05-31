@@ -54,14 +54,17 @@ func HandleEvent(e comms.EventRequest) any {
 	case comms.EventClientReady:
 		log.Println("EventClientReady received.")
 		r := comms.ClientReadyResponse{
+			EventName: comms.ClientReadyResponseEvent,
 			SessionID: GetSession(),
+			Ready:     true,
 		}
 		return r
 	case comms.EventClientScore:
 		log.Println("EventClientScore received.")
 		r := comms.ClientScoreResponse{
+			EventName: comms.ClientScoreResponseEvent,
 			SessionID: GetSession(),
-			Score:     "8",
+			Score:     1,
 		}
 		return r
 	case comms.EventGameSummary:

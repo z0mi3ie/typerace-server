@@ -18,7 +18,7 @@ type GetDictionaryResponse struct {
 type ClientReadyResponse struct {
 	EventName string `json:"eventName"`
 	SessionID string `json:"sessionId"`
-	Name      string `json:"name"`
+	Ready     bool   `json:"ready"`
 }
 
 type GameSummaryResponse struct {
@@ -30,7 +30,7 @@ type GameSummaryResponse struct {
 type ClientScoreResponse struct {
 	EventName string `json:"eventName"`
 	SessionID string `json:"sessionId"`
-	Score     string `json:"score"`
+	Score     int    `json:"score"`
 }
 
 type NewSessionResponse struct {

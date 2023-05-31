@@ -16,6 +16,8 @@ type Client struct {
 	Connection *websocket.Conn
 	SessionID  string
 	Words      []string
+	Ready      bool
+	Score      int
 }
 
 func NewClient() *Client {
@@ -84,8 +86,20 @@ func (c *Client) HandleEvent(e any) {
 		c.Words = er.Words
 	case comms.EventClientReady:
 		log.Printf("handling %s", comms.EventClientReady)
+		var er comms.ClientReadyResponse
+		err = json.Unmarshal(jsonString, &er)
+		if err != nil {
+			log.Println("error unmarshalling event response")
+		}
+		c.Ready = true
 	case comms.EventClientScore:
 		log.Printf("handling %s", comms.EventClientScore)
+		var er comms.ClientScoreResponse
+		err = json.Unmarshal(jsonString, &er)
+		if err != nil {
+			log.Println("error unmarshalling event response")
+		}
+		c.Score = er.Score
 	case comms.EventGameSummary:
 		log.Printf("handling %s", comms.EventGameSummary)
 	}
@@ -115,6 +129,8 @@ func main() {
 		log.Printf(">> client state >>")
 		log.Printf(">> SessionID %s", client.SessionID)
 		log.Printf(">> Words %s", client.Words)
+		log.Printf(">> Ready %v", client.Ready)
+		log.Printf(">> Score %d", client.Score)
 
 		er := comms.EventRequest{
 			SessionID: client.SessionID,
