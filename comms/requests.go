@@ -1,4 +1,4 @@
-package main
+package comms
 
 const (
 	EventClientReady   = "CLIENT_READY"

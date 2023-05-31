@@ -7,6 +7,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/z0mi3ie/typerace-server/comms"
 	"nhooyr.io/websocket"
 	"nhooyr.io/websocket/wsjson"
 )
@@ -14,6 +15,7 @@ import (
 type Client struct {
 	Connection *websocket.Conn
 	SessionID  string
+	Words      []string
 }
 
 func NewClient() *Client {
@@ -30,7 +32,7 @@ func (c *Client) Connect() {
 	c.Connection = conn
 }
 
-func (c *Client) SendEvent(e EventRequest) {
+func (c *Client) SendEvent(e comms.EventRequest) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 	log.Printf("SendEvent: %v", e)
@@ -43,20 +45,9 @@ func (c *Client) SendEvent(e EventRequest) {
 func (c *Client) ReadMessage() any {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
-	// Got an invalid frame payload when directly reading to EventResponse
 	var resp any
 	wsjson.Read(ctx, c.Connection, &resp)
 	return resp
-}
-
-type NewSessionResponse struct {
-	EventName string `json:"eventName"`
-	SessionID string `json:"sessionId"`
-}
-
-type EventRequest struct {
-	SessionID string `json:"sessionId"`
-	Event     string `json:"event"`
 }
 
 func (c *Client) HandleEvent(e any) {
@@ -74,16 +65,29 @@ func (c *Client) HandleEvent(e any) {
 	}
 
 	switch v["eventName"] {
-	case "NEW_SESSION":
-		log.Println("handling NEW_SESSION_RESPONSE")
-		var er NewSessionResponse
+	case comms.EventNewSession:
+		log.Printf("handling %s", comms.EventNewSession)
+		var er comms.NewSessionResponse
 		err = json.Unmarshal(jsonString, &er)
 		if err != nil {
 			log.Println("error unmarshalling event response")
 		}
-		log.Println("er.EventName: " + er.EventName)
-		log.Println("er.SessionID: " + er.SessionID)
 		c.SessionID = er.SessionID
+	case comms.EventGetDictionary:
+		log.Printf("handling %s", comms.EventGetDictionary)
+		var er comms.GetDictionaryResponse
+		err = json.Unmarshal(jsonString, &er)
+		if err != nil {
+			log.Println("error unmarshalling event response")
+		}
+		log.Println("words from event... " + string(er.Words[0]))
+		c.Words = er.Words
+	case comms.EventClientReady:
+		log.Printf("handling %s", comms.EventClientReady)
+	case comms.EventClientScore:
+		log.Printf("handling %s", comms.EventClientScore)
+	case comms.EventGameSummary:
+		log.Printf("handling %s", comms.EventGameSummary)
 	}
 }
 
@@ -92,7 +96,6 @@ func main() {
 	client.Connect()
 	defer client.Connection.Close(websocket.StatusInternalError, "client error, yikes")
 
-	// Read messages from server and display them as they appear
 	go func(c *Client) {
 		for {
 			resp := c.ReadMessage()
@@ -101,7 +104,7 @@ func main() {
 		}
 	}(client)
 
-	// Accept input from user
+	// Accept input from user for testing
 	for {
 		var message string
 		fmt.Scanln(&message)
@@ -109,7 +112,11 @@ func main() {
 			break
 		}
 
-		er := EventRequest{
+		log.Printf(">> client state >>")
+		log.Printf(">> SessionID %s", client.SessionID)
+		log.Printf(">> Words %s", client.Words)
+
+		er := comms.EventRequest{
 			SessionID: client.SessionID,
 			Event:     message,
 		}
@@ -118,6 +125,5 @@ func main() {
 	}
 
 	// TODO: send client disconnecting message server
-
 	client.Connection.Close(websocket.StatusNormalClosure, "")
 }

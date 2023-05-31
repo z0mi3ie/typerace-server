@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/z0mi3ie/typerace-server/comms"
 	"github.com/z0mi3ie/typerace-server/server/dictionary"
 	"github.com/z0mi3ie/typerace-server/server/session"
 	"nhooyr.io/websocket"
@@ -28,51 +29,51 @@ func GetSession() string {
 	return "fakesession"
 }
 
-func HandleEvent(e EventRequest) any {
+func HandleEvent(e comms.EventRequest) any {
 	switch e.Event {
-	case EventNewSession:
+	case comms.EventNewSession:
 		log.Println("NewSessionEvent received.")
 		s := session.New()
 		sessions[s.ID] = s
-		r := NewSessionResponse{
-			EventName: NewSessionResponseEvent,
+		r := comms.NewSessionResponse{
+			EventName: comms.NewSessionResponseEvent,
 			SessionID: sessions[s.ID].ID,
 		}
 		return r
-	case EventGetDictionary:
+	case comms.EventGetDictionary:
 		log.Println("EventGetDictionary received. Session: " + e.SessionID)
 		session := sessions[e.SessionID]
 		log.Println("Got session: " + session.ID)
 		w := session.Dictionary.Random()
-		r := GetDictionaryResponse{
-			EventName: GetDictionaryResponseEvent,
+		r := comms.GetDictionaryResponse{
+			EventName: comms.GetDictionaryResponseEvent,
 			SessionID: GetSession(),
 			Words:     []string{w},
 		}
 		return r
-	case EventClientReady:
+	case comms.EventClientReady:
 		log.Println("EventClientReady received.")
-		r := ClientReadyResponse{
+		r := comms.ClientReadyResponse{
 			SessionID: GetSession(),
 		}
 		return r
-	case EventClientScore:
+	case comms.EventClientScore:
 		log.Println("EventClientScore received.")
-		r := ClientScoreResponse{
+		r := comms.ClientScoreResponse{
 			SessionID: GetSession(),
 			Score:     "8",
 		}
 		return r
-	case EventGameSummary:
+	case comms.EventGameSummary:
 		log.Println("EventGameSummary received.")
-		r := GameSummaryResponse{
+		r := comms.GameSummaryResponse{
 			SessionID: GetSession(),
 		}
 		return r
 	}
 
 	log.Println("[ERROR] invalid event recieved")
-	return ErrorResponse{
+	return comms.ErrorResponse{
 		SessionID: GetSession(),
 		Error:     "invalid event",
 	}
@@ -88,6 +89,7 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 
 	connections = append(connections, c)
 
+	// Uncomment this when we are ready to support all the clients :)
 	/*
 		for _, cc := range connections {
 			err = wsjson.Write(context.Background(), cc, "new client connected")
@@ -102,7 +104,7 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 		defer cancel()
 
 		//var v any
-		var v EventRequest
+		var v comms.EventRequest
 		err = wsjson.Read(ctx, c, &v)
 		if err != nil {
 			log.Println(err)

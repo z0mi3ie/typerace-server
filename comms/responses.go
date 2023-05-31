@@ -1,4 +1,4 @@
-package main
+package comms
 
 const (
 	NewSessionResponseEvent    = "NEW_SESSION"
@@ -10,25 +10,25 @@ const (
 )
 
 type GetDictionaryResponse struct {
-	EventName string   `json:"event"`
+	EventName string   `json:"eventName"`
 	SessionID string   `json:"sessionId"`
 	Words     []string `json:"words"`
 }
 
 type ClientReadyResponse struct {
-	EventName string `json:"event"`
+	EventName string `json:"eventName"`
 	SessionID string `json:"sessionId"`
 	Name      string `json:"name"`
 }
 
 type GameSummaryResponse struct {
-	EventName string `json:"event"`
+	EventName string `json:"eventName"`
 	SessionID string `json:"sessionId"`
 	Score     string `json:"score"`
 }
 
 type ClientScoreResponse struct {
-	EventName string `json:"event"`
+	EventName string `json:"eventName"`
 	SessionID string `json:"sessionId"`
 	Score     string `json:"score"`
 }
